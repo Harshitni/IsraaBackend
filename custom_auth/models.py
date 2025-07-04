@@ -3,7 +3,7 @@ from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator, MinLengthValidator
 
 
-class User(models.Model):
+class AuthUsers(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     instance_id = models.UUIDField(null=True, blank=True)
 
@@ -122,7 +122,7 @@ class FlowState(models.Model):
     
 
 class Identity(models.Model):
-    identities_user_id_fkey = models.ForeignKey('User', on_delete=models.CASCADE, related_name='identities')
+    identities_user_id_fkey = models.ForeignKey('AuthUsers', on_delete=models.CASCADE, related_name='identities')
     provider_id = models.TextField()
     user_id = models.UUIDField()
     identity_data = models.JSONField()
@@ -207,7 +207,7 @@ class MfaChallenge(models.Model):
     
 
 class MfaFactor(models.Model):
-    mfa_factors_user_id_fkey = models.ForeignKey('User', on_delete=models.CASCADE, related_name='mfa_factors')
+    mfa_factors_user_id_fkey = models.ForeignKey('AuthUsers', on_delete=models.CASCADE, related_name='mfa_factors')
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user_id = models.UUIDField()
     friendly_name = models.TextField(null=True, blank=True)
@@ -241,7 +241,7 @@ class MfaFactor(models.Model):
 
 
 class OneTimeToken(models.Model):
-    one_time_tokens_user_id_fkey = models.ForeignKey('User', on_delete=models.CASCADE, related_name='one_time_tokens')
+    one_time_tokens_user_id_fkey = models.ForeignKey('AuthUsers', on_delete=models.CASCADE, related_name='one_time_tokens')
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user_id = models.UUIDField()
     token_type = models.CharField(max_length=50)
@@ -275,7 +275,7 @@ class OneTimeToken(models.Model):
     
 
 class Session(models.Model):
-    session_user_id_fkey = models.ForeignKey('User', on_delete=models.CASCADE, related_name='sessions')
+    session_user_id_fkey = models.ForeignKey('AuthUsers', on_delete=models.CASCADE, related_name='sessions')
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user_id = models.UUIDField()
     created_at = models.DateTimeField(null=True, blank=True)
