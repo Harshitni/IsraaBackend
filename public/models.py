@@ -1,32 +1,35 @@
 import uuid
 from django.db import models
-from django.contrib.postgres.fields import ArrayField
+from django.utils import timezone
 from custom_auth.models import AuthUsers
+# from django.contrib.auth.models import User
+from django.contrib.postgres.fields import ArrayField
+from publics.models import CommunityPost
 
-class PublicUser(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    created_at = models.DateTimeField(auto_now_add=False, default=None)
-    email = models.TextField(unique=True)
-    name = models.TextField()
-    user_id = models.TextField(unique=True)
-    display_name = models.TextField(null=True, blank=True)
-    streak = models.IntegerField(null=True, blank=True, default=0)
-    last_active = models.DateTimeField(null=True, blank=True)
-    handle = models.TextField(unique=True)
+# class PublicUser(models.Model):
+#     id = models.BigAutoField(primary_key=True)
+#     created_at = models.DateTimeField(auto_now_add=False, default=None)
+#     email = models.TextField(unique=True)
+#     name = models.TextField()
+#     user_id = models.TextField(unique=True)
+#     display_name = models.TextField(null=True, blank=True)
+#     streak = models.IntegerField(null=True, blank=True, default=0)
+#     last_active = models.DateTimeField(null=True, blank=True)
+#     handle = models.TextField(unique=True)
 
-    class Meta:
-        db_table = 'public.users'
-        managed = False
-        unique_together = [('id', 'name')]
-        indexes = [
-            models.Index(fields=['display_name'], name='idx_users_display_name'),
-            models.Index(fields=['user_id'], name='idx_users_user_id'),
-            models.Index(fields=['name'], name='idx_users_name'),
-            models.Index(fields=['email'], name='idx_users_email'),
-        ]
+#     class Meta:
+#         db_table = 'public.users'
+#         managed = False
+#         unique_together = [('id', 'name')]
+#         indexes = [
+#             models.Index(fields=['display_name'], name='idx_users_display_name'),
+#             models.Index(fields=['user_id'], name='idx_users_user_id'),
+#             models.Index(fields=['name'], name='idx_users_name'),
+#             models.Index(fields=['email'], name='idx_users_email'),
+#         ]
 
-    def __str__(self):
-        return f"{self.name} ({self.email})"
+#     def __str__(self):
+#         return f"{self.name} ({self.email})"
 
 
 class UserProfile(models.Model):
@@ -44,10 +47,7 @@ class UserProfile(models.Model):
     is_premium = models.BooleanField(null=True, default=False)
     referral_source = models.TextField(null=True, blank=True)
     referral_date = models.DateTimeField(null=True, blank=True)
-    subscription_plan = models.TextField(
-        null=True,
-        blank=True,
-        default='free',
+    subscription_plan = models.TextField(null=True, blank=True, default='free',
         choices=[
             ('free', 'Free'),
             ('monthly', 'Monthly'),
@@ -99,7 +99,7 @@ class AccountabilityGroup(models.Model):
 
 class AccountabilityGroupMembership(models.Model):
     group = models.ForeignKey(AccountabilityGroup, on_delete=models.CASCADE, db_column='group_id')
-    user = models.ForeignKey(PublicUser, to_field='handle', on_delete=models.CASCADE, db_column='user_handle')
+    user = models.ForeignKey(AuthUsers, to_field='handle', on_delete=models.CASCADE, db_column='user_handle')
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     group_id = models.UUIDField(null=True, blank=True)
     user_handle = models.TextField(null=True, blank=True)
@@ -146,10 +146,7 @@ class UserFeedback(models.Model):
     feedback_text = models.TextField(default='')
     screenshot_image = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=False)
-    feedback_status = models.TextField(
-        null=True,
-        blank=True,
-        default='pending',
+    feedback_status = models.TextField(null=True, blank=True, default='pending',
         choices=[
             ('pending', 'Pending'),
             ('approved', 'Approved'),
@@ -158,9 +155,7 @@ class UserFeedback(models.Model):
     )
     name = models.TextField(null=True, blank=True)
     email = models.TextField(null=True, blank=True)
-    feedback_phase = models.TextField(
-        null=True,
-        blank=True,
+    feedback_phase = models.TextField( null=True, blank=True,
         choices=[
             ('Under Review', 'Under Review'),
             ('Under Development', 'Under Development'),
@@ -297,3 +292,192 @@ class VerseBookmark(models.Model):
 
     def __str__(self):
         return f"Bookmark (User: {self.user_id}, Surah: {self.surah_number}, Ayah: {self.verse_number})"
+
+
+class KnowledgeBase(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user_id = models.ForeignKey(AuthUsers, on_delete=models.CASCADE, db_column='user_id')
+    filename = models.TextField()
+    content = models.TextField()
+    file_type = models.TextField(null=True, blank=True)
+    uploaded_at = models.DateTimeField(default=timezone.now)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = 'public.knowledge_base'
+        managed = False
+
+    def __str__(self):
+        return f"{self.filename} uploaded by {self.user_id}"
+
+
+class NotificationSchedule(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user_id = models.ForeignKey(AuthUsers, on_delete=models.CASCADE, db_column='user_id')
+    notification_type = models.TextField()
+    scheduled_for = models.DateTimeField()
+    sent = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = 'public.notification_schedule'
+        managed = False
+
+    def __str__(self):
+        return f"Notification for {self.user_id} at {self.scheduled_for}"
+
+
+class Notification(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user_id = models.ForeignKey(AuthUsers, on_delete=models.CASCADE, db_column='user_id')
+    notification_type = models.TextField()
+    title = models.TextField()
+    message = models.TextField()
+    data = models.TextField(null=True, blank=True, default='{}')
+    read_status = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = 'public.notifications'
+        managed = False
+        indexes = [
+            models.Index(fields=['user_id', 'created_at'], name='idx_notifications_user_id_created_at')
+        ]
+
+    def __str__(self):
+        return f"Notification({self.title}) to {self.user_id}"
+
+
+class PalMessage(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    sender_id = models.UUIDField()
+    receiver_id = models.UUIDField()
+    connection_id = models.UUIDField()
+    message_content = models.TextField()
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
+    read_at = models.DateTimeField(null=True, blank=True)
+    message_type = models.TextField(default='text')
+
+    class Meta:
+        db_table = 'public.pal_messages'
+        managed = False
+        indexes = [
+            models.Index(fields=['connection_id', 'created_at'], name='idx_pal_messages_connection_id'),
+            models.Index(fields=['sender_id', 'receiver_id', 'created_at'], name='idx_pal_messages_participants'),
+        ]
+
+    def __str__(self):
+        return f"Message {self.id} from {self.sender_id} to {self.receiver_id}"
+
+
+class PrayerPalConnection(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    requester_id = models.UUIDField()
+    receiver_id = models.UUIDField()
+    status = models.TextField(default='pending')
+    connection_type = models.TextField(default='prayer')
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = 'public.prayer_pal_connections'
+        managed = False
+        constraints = [
+            models.UniqueConstraint(fields=['requester_id', 'receiver_id'], name='prayer_pal_connections_requester_id_receiver_id_key'),
+            models.CheckConstraint(check=models.Q(status__in=['pending', 'accepted', 'declined']), name='prayer_pal_connections_status_check'),
+            models.CheckConstraint(check=models.Q(connection_type__in=['prayer', 'quran']), name='check_connection_type'),
+        ]
+        indexes = [
+            models.Index(fields=['requester_id'], name='idx_prayer_pal_connection_req'),
+            models.Index(fields=['receiver_id'], name='idx_prayer_pal_connection_rec'),
+        ]
+
+    def __str__(self):
+        return f"Connection: {self.requester_id} ➝ {self.receiver_id} ({self.status})"
+
+
+class PrayerReward(models.Model):
+    name = models.TextField(primary_key=True)
+    reward = models.IntegerField()
+
+    class Meta:
+        db_table = 'public.prayer_rewards'
+        managed = False
+
+    def __str__(self):
+        return f"{self.name}: {self.reward} points"
+
+
+class PrayerSupport(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    post_id = models.ForeignKey(CommunityPost, on_delete=models.CASCADE, db_column='post_id', related_name='prayer_supports')
+    supporter_user_id = models.UUIDField()
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = 'public.prayer_support'
+        managed = False
+        constraints = [
+            models.UniqueConstraint(fields=['post_id', 'supporter_user_id'], name='prayer_support_post_id_supporter_user_id_key')
+        ]
+
+    def __str__(self):
+        return f"Support by {self.supporter_user_id} on post {self.post_id}"
+
+
+class PushSubscription(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user_id = models.ForeignKey(AuthUsers, on_delete=models.CASCADE, related_name='push_subscription')
+    endpoint = models.TextField()
+    p256dh_key = models.TextField()
+    auth_key = models.TextField()
+    user_agent = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = 'public.push_subscriptions'
+        managed = False
+        constraints = [
+            models.UniqueConstraint(fields=['user_id', 'endpoint'], name='push_subscriptions_user_id_endpoint_key'),
+        ]
+
+    def __str__(self):
+        return f"PushSubscription(id={self.id}, user_id={self.user_id})"
+
+
+class QuranProgress(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user_id = models.ForeignKey(AuthUsers, on_delete=models.CASCADE, related_name='quran_progress')
+    surah_number = models.IntegerField()
+    page_number = models.IntegerField()
+    completed_at = models.DateTimeField(default=timezone.now)
+    reading_time_seconds = models.IntegerField(null=True, default=0)
+    created_at = models.DateTimeField(default=timezone.now)
+    session_id = models.UUIDField(default=uuid.uuid4, null=True, blank=True)
+    streak_day = models.IntegerField(null=True, default=1)
+
+    class Meta:
+        db_table = 'public.quran_progress'
+        managed = False
+
+    def __str__(self):
+        return f"QuranProgress(user={self.user_id}, surah={self.surah_number}, page={self.page_number})"
+
+
+class SavedPost(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user_id = models.UUIDField()
+    post_id = models.ForeignKey(CommunityPost, on_delete=models.CASCADE, related_name='saved_posts')
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = 'public.saved_posts'
+        managed = False
+        constraints = [
+            models.UniqueConstraint(fields=['user_id', 'post_id'], name='saved_posts_user_id_post_id_key')
+        ]
+
+    def __str__(self):
+        return f"SavedPost(user={self.user_id}, post={self.post_id})"
