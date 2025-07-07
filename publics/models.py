@@ -3,8 +3,20 @@ from django.db import models
 from django.utils import timezone
 from datetime import timedelta
 from django.core.validators import MinLengthValidator, MinValueValidator, MaxValueValidator
+# from django.contrib.auth.models import User
 from custom_auth.models import AuthUsers
-from public.models import UserProfileCommunity
+from public.models import UserProfileCommunity, AccountabilityGroup
+
+STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+
+REACTION_CHOICES = [
+        ('like', 'Like'),
+        ('heart', 'Heart'),
+    ]
 
 
 class AdminAction(models.Model):
@@ -195,11 +207,6 @@ class CommunityComment(models.Model):
     def __str__(self):
         return f"Comment by {'Anonymous' if self.is_anonymous else self.user_id} on Post {self.post_id}"
 
-STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('approved', 'Approved'),
-        ('rejected', 'Rejected'),
-    ]
 
 class CommunityJoinRequest(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -222,11 +229,6 @@ class CommunityJoinRequest(models.Model):
     def __str__(self):
         return f"{self.user_id} -> {self.community_id} [{self.status}]"
 
-
-REACTION_CHOICES = [
-        ('like', 'Like'),
-        ('heart', 'Heart'),
-    ]
 
 class CommunityReaction(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -332,3 +334,101 @@ class FreeTrial(models.Model):
 
     def __str__(self):
         return f"FreeTrial(user_id={self.user_id}, active={self.is_active})"
+
+
+class GroupChatMessage(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    group_id = models.ForeignKey(AccountabilityGroup, on_delete=models.CASCADE, db_column='group_id', related_name='group_chat_messages')
+    user_id = models.UUIDField()
+    message_content = models.TextField()
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now, null=True, blank=True)
+    replied_to_message = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, db_column='replied_to_message_id', related_name='replies')
+    reply_preview = models.TextField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'public.group_chat_messages'
+        managed = False
+        indexes = [
+            models.Index(fields=['replied_to_message'], name='idx_group_chat_messages_replied_to'),
+        ]
+
+    def __str__(self):
+        return f"{self.user_id}: {self.message_content[:30]}..."
+    
+
+class GroupChatParticipant(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    group_id = models.ForeignKey(AccountabilityGroup, on_delete=models.CASCADE, db_column='group_id', related_name='participants')
+    user_id = models.UUIDField()
+    joined_at = models.DateTimeField(auto_now_add=False, default=None, null=True, blank=True)
+
+    class Meta:
+        db_table = 'public.group_chat_participants'
+        managed = False
+        constraints = [
+            models.UniqueConstraint(fields=['group_id', 'user_id'], name='group_chat_participants_group_id_user_id_key')
+        ]
+
+    def __str__(self):
+        return f"GroupChatParticipant(user_id={self.user_id}, group_id={self.group_id})"
+
+
+class GroupJoinRequest(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    group_id = models.ForeignKey(AccountabilityGroup, on_delete=models.CASCADE, db_column='group_id', related_name='group_join_requests')
+    user_id = models.ForeignKey(AuthUsers, on_delete=models.CASCADE, related_name="group_joining_user")
+    invite_code = models.TextField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    request_message = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=False, default=None, null=True, blank=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    reviewed_by = models.ForeignKey(AuthUsers, on_delete=models.SET_NULL, db_column='reviewed_by', null=True, blank=True, related_name='reviewed_group_requests')
+
+    class Meta:
+        db_table = 'public.group_join_requests'
+        managed = False
+        constraints = [
+            models.UniqueConstraint(fields=['group_id', 'user_id'], name='group_join_requests_group_id_user_id_key'),
+            models.CheckConstraint(check=models.Q(status__in=['pending', 'approved', 'rejected']), name='group_join_requests_status_check'),
+        ]
+
+    def __str__(self):
+        return f"JoinRequest(user_id={self.user_id}, group={self.group_id}, status={self.status})"
+
+
+class InteractionHistory(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user_id = models.UUIDField()
+    activity_type = models.TextField()
+    activity_id = models.TextField(null=True, blank=True)
+    action = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now, null=True, blank=True)
+    recent_activity = models.TextField(default='{}', null=True)
+
+    class Meta:
+        db_table = 'public.interaction_history'
+        managed = False
+
+    def __str__(self):
+        return f"InteractionHistory(user={self.user_id}, activity_type={self.activity_type})"
+
+
+class InvitationCode(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    code = models.TextField(unique=True)
+    created_by = models.ForeignKey(AuthUsers, on_delete=models.CASCADE, db_column='created_by')
+    discount_percentage = models.IntegerField(null=True, default=50)
+    usage_limit = models.IntegerField(null=True, default=10)
+    usage_count = models.IntegerField(null=True, default=0)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(null=True, default=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = 'public.invitation_codes'
+        managed = False
+
+    def __str__(self):
+        return f"InvitationCode(code={self.code}, active={self.is_active})"
