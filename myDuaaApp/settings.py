@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'duaas',
     'custom_auth',
     'public',
+    'publics',
 ]
 
 MIDDLEWARE = [
@@ -78,12 +79,12 @@ WSGI_APPLICATION = 'myDuaaApp.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'mssql',
+        'ENGINE': 'sql_server.pyodbc',
         'NAME': 'DuaaApp',  # <-- replace with your DB name
         'HOST': 'localhost',
         'PORT': '',  # leave blank for default
         'OPTIONS': {
-            'driver': 'ODBC Driver 18 for SQL Server',
+            'driver': 'ODBC Driver 17 for SQL Server',
             'trusted_connection': 'yes',
             'extra_params': 'TrustServerCertificate=yes;',
         },
