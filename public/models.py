@@ -1,11 +1,8 @@
 import uuid
 from django.db import models
 from django.utils import timezone
-from custom_auth.models import AuthUsers
-
-from datetime import timedelta
 from django.core.validators import MinLengthValidator, MinValueValidator, MaxValueValidator
-
+from datetime import timedelta
 from custom_auth.models import AuthUsers
 
 STATUS_CHOICES = [
@@ -18,6 +15,7 @@ REACTION_CHOICES = [
         ('like', 'Like'),
         ('heart', 'Heart'),
     ]
+
 # class PublicUser(models.Model):
 #     id = models.BigAutoField(primary_key=True)
 #     created_at = models.DateTimeField(auto_now_add=False, default=None)
@@ -49,13 +47,12 @@ class UserProfile(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user_id = models.UUIDField(unique=True)
 
-    name = models.CharField(max_length=255, null=True, blank=True)  # ✅ CharField for SQL Server
-    email = models.CharField(max_length=255, null=True, blank=True)  # ✅ CharField for indexing
+    name = models.CharField(max_length=255, null=True, blank=True)  #CharField for SQL Server
+    email = models.CharField(max_length=255, null=True, blank=True)  #CharField for indexing
 
     current_emotional_state = models.TextField(null=True, blank=True)
     last_interaction_date = models.DateTimeField(null=True, blank=True)
 
-    # ✅ Fix JSONField warning: use `dict` as callable, not static string
     notification_preferences = models.JSONField(default=dict, null=True, blank=True)
 
     created_at = models.DateTimeField()
@@ -64,7 +61,7 @@ class UserProfile(models.Model):
     is_admin = models.BooleanField(null=True, default=False)
     is_premium = models.BooleanField(null=True, default=False)
 
-    referral_source = models.CharField(max_length=255, null=True, blank=True)  # ✅ CharField for indexing
+    referral_source = models.CharField(max_length=255, null=True, blank=True)  #CharField for indexing
     referral_date = models.DateTimeField(null=True, blank=True)
 
     subscription_plan = models.CharField(
@@ -953,3 +950,22 @@ class InvitationCode(models.Model):
 
     def __str__(self):
         return f"InvitationCode(code={self.code}, active={self.is_active})"
+    
+
+class PlatformAIConfig(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    provider = models.TextField(default='openai')
+    model = models.TextField(default='gpt-4-turbo')
+    system_prompt = models.TextField(null=True, blank=True)
+    knowledge_base = models.TextField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
+    created_by = models.UUIDField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'platform_ai_config'
+        managed = True
+
+    def __str__(self):
+        return f"{self.provider} - {self.model} (Active: {self.is_active})"

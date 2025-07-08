@@ -1,0 +1,69 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+env/
+ENV/
+VENV/
+*.env
+*.venv
+.Python
+
+# Django
+*.log
+*.pot
+*.pyc
+*.pyo
+local_settings.py
+instance/
+.settings/
+media/
+staticfiles/
+static_root/
+coverage.xml
+htmlcov/
+.DS_Store
+
+# VS Code
+.vscode/
+.history/
+.code-workspace
+
+# Migrations
+**/migrations/*.py
+!**/migrations/__init__.py
+
+# OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.bak
+
+# Tests
+.pytest_cache/
+.tox/
+.nox/
+.coverage
+.cache/
+nosetests.xml
+test-results/
+
+# Environment variables and secret files
+.env
+.env.*
+
+# IDEs
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+*.eggs/
+*.wheel

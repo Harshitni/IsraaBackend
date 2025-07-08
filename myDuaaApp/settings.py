@@ -90,6 +90,20 @@ DATABASES = {
     }
 }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'mssql',   # sql_server.pyodbc
+#         'NAME': 'DuaaApp',  # <-- replace with your DB name
+#         'HOST': 'localhost',
+#         'PORT': '',  # leave blank for default
+#         'OPTIONS': {
+#             'driver': 'ODBC Driver 18 for SQL Server',
+#             'trusted_connection': 'yes',
+#             'extra_params': 'TrustServerCertificate=yes;',
+#         },
+#     }
+# }
+
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
