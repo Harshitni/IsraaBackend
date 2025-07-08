@@ -37,10 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'duaas',
     'custom_auth',
     'public',
-    'publics',
 ]
 
 MIDDLEWARE = [
@@ -79,20 +77,18 @@ WSGI_APPLICATION = 'myDuaaApp.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'sql_server.pyodbc',
-        'NAME': 'DuaaApp',  # <-- replace with your DB name
-        'HOST': 'localhost',
-        'PORT': '',  # leave blank for default
+        'ENGINE': 'mssql',
+        'NAME': 'israa-dev',  # Azure DB name
+        'HOST': 'israa-db.database.windows.net',
+        'PORT': '1433',
+        'USER': 'israa@israa-db',  # for Azure SQL format
+        'PASSWORD': 'DuaaApp123@',
         'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
-            'trusted_connection': 'yes',
-            'extra_params': 'TrustServerCertificate=yes;',
+            'driver': 'ODBC Driver 18 for SQL Server',
+            'extra_params': 'TrustServerCertificate=yes;Encrypt=yes;',
         },
     }
 }
-
-
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
