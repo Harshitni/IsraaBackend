@@ -37,11 +37,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
     'custom_auth',
     'public',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -79,10 +82,10 @@ DATABASES = {
     'default': {
         'ENGINE': 'mssql',
         'NAME': 'israa-dev',  # Azure DB name
-        'HOST': 'israa-db.database.windows.net',
-        'PORT': '1433',
-        'USER': 'israa@israa-db',  # for Azure SQL format
-        'PASSWORD': 'DuaaApp123@',
+        'HOST': 'localhost',
+        'PORT': '',
+        # 'USER': 'israa@israa-db',  # for Azure SQL format
+        # 'PASSWORD': 'DuaaApp123@',
         'OPTIONS': {
             'driver': 'ODBC Driver 18 for SQL Server',
             'extra_params': 'TrustServerCertificate=yes;Encrypt=yes;',
@@ -130,3 +133,9 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTH_USER_MODEL = 'custom_auth.AuthUsers'
+
+#Needs to update for production
+CORS_ALLOW_ALL_ORIGINS = True 
+CORS_ALLOW_CREDENTIALS = True
