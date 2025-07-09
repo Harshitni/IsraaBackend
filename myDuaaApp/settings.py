@@ -87,14 +87,13 @@ WSGI_APPLICATION = 'myDuaaApp.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
-        'NAME': 'israa-dev',  # Azure DB name
-        'HOST': 'localhost',
-        'PORT': '',
-        # 'USER': 'israa@israa-db',  # for Azure SQL format
-        # 'PASSWORD': 'DuaaApp123@',
+        'NAME': 'DuaaApp',  # <-- replace with your DB name
+        'HOST': 'DESKTOP-QSK6O8U',
+        'PORT': '',  # leave blank for default
         'OPTIONS': {
             'driver': 'ODBC Driver 18 for SQL Server',
-            'extra_params': 'TrustServerCertificate=yes;Encrypt=yes;',
+            'trusted_connection': 'yes',
+            'extra_params': 'TrustServerCertificate=yes;',
         },
     }
 }
